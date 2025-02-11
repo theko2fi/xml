@@ -24,6 +24,12 @@ def validate_sub_application(smart_folder, job, line_number):
     if job_sub_application != smart_folder_sub_application:
         print(f"JOB SUB_APPLICATION '{job_sub_application}' does not match SMART_FOLDER SUB_APPLICATION '{smart_folder_sub_application}' (line {line_number}).")
 
+def validate_nodeid(nodeid, pattern, element_type, line_number):
+    if nodeid and pattern.match(nodeid):
+        print(f"{element_type} NODEID '{nodeid}' matches the format.")
+    else:
+        print(f"{element_type} NODEID '{nodeid}' does not match the format (line {line_number}).")
+
 def parseXML(xmlFile):
     """Parse the XML file"""
     with open(xmlFile, 'rb') as f:
@@ -40,9 +46,12 @@ def parseXML(xmlFile):
     # Regular expression to match the APPLICATION format
     application_pattern = re.compile(r'^[A-Za-z0-9]{5}-[A-Za-z0-9]{5}-[A-Za-z]\d$')
 
-    validate_xml_standard(root, smart_folder_jobname_pattern, job_jobname_pattern, application_pattern)
+    # Regular expression to match the NODEID format
+    nodeid_pattern = re.compile(r'^NG_[A-Za-z0-9]{5}-[A-Za-z0-9]{5}-[A-Za-z]\d_[A-Za-z0-9]+$')
 
-def validate_xml_standard(root, smart_folder_jobname_pattern, job_jobname_pattern, application_pattern):
+    validate_xml_standard(root, smart_folder_jobname_pattern, job_jobname_pattern, application_pattern, nodeid_pattern)
+
+def validate_xml_standard(root, smart_folder_jobname_pattern, job_jobname_pattern, application_pattern, nodeid_pattern):
     # iterate over all SMART_FOLDER elements and check their JOBNAME and APPLICATION attributes
     for smart_folder in root.findall('SMART_FOLDER'):
         jobname = smart_folder.get("JOBNAME")
@@ -52,14 +61,16 @@ def validate_xml_standard(root, smart_folder_jobname_pattern, job_jobname_patter
         validate_jobname(jobname, smart_folder_jobname_pattern, "SMART_FOLDER", line_number)
         validate_application(application, application_pattern, "SMART_FOLDER", line_number)
 
-        # iterate over all JOB elements within the SMART_FOLDER and check their JOBNAME and APPLICATION attributes
+        # iterate over all JOB elements within the SMART_FOLDER and check their JOBNAME, APPLICATION, and NODEID attributes
         for job in smart_folder.findall('JOB'):
             jobname = job.get("JOBNAME")
             application = job.get("APPLICATION")
+            nodeid = job.get("NODEID")
             line_number = job.sourceline
 
             validate_jobname(jobname, job_jobname_pattern, "JOB", line_number)
             validate_application(application, application_pattern, "JOB", line_number)
+            validate_nodeid(nodeid, nodeid_pattern, "JOB", line_number)
             validate_sub_application(smart_folder, job, line_number)
 
 if __name__ == "__main__":
