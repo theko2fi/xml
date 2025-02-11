@@ -13,6 +13,17 @@ def validate_application(application, pattern, element_type, line_number):
     else:
         print(f"{element_type} APPLICATION '{application}' does not match the format (line {line_number}).")
 
+def validate_sub_application(smart_folder, job, line_number):
+    smart_folder_sub_application = smart_folder.get("SUB_APPLICATION")
+    smart_folder_jobname = smart_folder.get("JOBNAME")
+    job_sub_application = job.get("SUB_APPLICATION")
+
+    if smart_folder_sub_application != smart_folder_jobname:
+        print(f"SMART_FOLDER SUB_APPLICATION '{smart_folder_sub_application}' does not match JOBNAME '{smart_folder_jobname}' (line {line_number}).")
+
+    if job_sub_application != smart_folder_sub_application:
+        print(f"JOB SUB_APPLICATION '{job_sub_application}' does not match SMART_FOLDER SUB_APPLICATION '{smart_folder_sub_application}' (line {line_number}).")
+
 def parseXML(xmlFile):
     """Parse the XML file"""
     with open(xmlFile, 'rb') as f:
@@ -49,6 +60,7 @@ def validate_xml_standard(root, smart_folder_jobname_pattern, job_jobname_patter
 
             validate_jobname(jobname, job_jobname_pattern, "JOB", line_number)
             validate_application(application, application_pattern, "JOB", line_number)
+            validate_sub_application(smart_folder, job, line_number)
 
 if __name__ == "__main__":
     f = r'/tmp/xml/test.xml'
