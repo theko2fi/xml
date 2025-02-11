@@ -36,6 +36,12 @@ def validate_quantitative_name(name, pattern, element_type, line_number):
     else:
         print(f"{element_type} QUANTITATIVE NAME '{name}' does not match the format (line {line_number}).")
 
+def validate_dayscal(dayscal, pattern, element_type, line_number):
+    if dayscal in ["C-WORKDAY", "C-ALL"] or pattern.match(dayscal):
+        print(f"{element_type} DAYSCAL '{dayscal}' matches the format.")
+    else:
+        print(f"{element_type} DAYSCAL '{dayscal}' does not match the format (line {line_number}).")
+
 def parseXML(xmlFile):
     """Parse the XML file"""
     with open(xmlFile, 'rb') as f:
@@ -58,9 +64,12 @@ def parseXML(xmlFile):
     # Regular expression to match the QUANTITATIVE NAME format
     quantitative_name_pattern = re.compile(r'^QR_[A-Za-z0-9]{5}$')
 
-    validate_xml_standard(root, smart_folder_jobname_pattern, job_jobname_pattern, application_pattern, nodeid_pattern, quantitative_name_pattern)
+    # Regular expression to match the DAYSCAL format
+    dayscal_pattern = re.compile(r'^C[RPBL]-[A-Za-z][A-Za-z0-9]{5}\d{2}-[A-Za-z0-9]+$')
 
-def validate_xml_standard(root, smart_folder_jobname_pattern, job_jobname_pattern, application_pattern, nodeid_pattern, quantitative_name_pattern):
+    validate_xml_standard(root, smart_folder_jobname_pattern, job_jobname_pattern, application_pattern, nodeid_pattern, quantitative_name_pattern, dayscal_pattern)
+
+def validate_xml_standard(root, smart_folder_jobname_pattern, job_jobname_pattern, application_pattern, nodeid_pattern, quantitative_name_pattern, dayscal_pattern):
     # iterate over all SMART_FOLDER elements and check their JOBNAME and APPLICATION attributes
     for smart_folder in root.findall('SMART_FOLDER'):
         jobname = smart_folder.get("JOBNAME")
@@ -70,17 +79,21 @@ def validate_xml_standard(root, smart_folder_jobname_pattern, job_jobname_patter
         validate_jobname(jobname, smart_folder_jobname_pattern, "SMART_FOLDER", line_number)
         validate_application(application, application_pattern, "SMART_FOLDER", line_number)
 
-        # iterate over all JOB elements within the SMART_FOLDER and check their JOBNAME, APPLICATION, NODEID, and QUANTITATIVE NAME attributes
+        # iterate over all JOB elements within the SMART_FOLDER and check their JOBNAME, APPLICATION, NODEID, QUANTITATIVE NAME, and DAYSCAL attributes
         for job in smart_folder.findall('JOB'):
             jobname = job.get("JOBNAME")
             application = job.get("APPLICATION")
             nodeid = job.get("NODEID")
+            dayscal = job.get("DAYSCAL")
             line_number = job.sourceline
 
             validate_jobname(jobname, job_jobname_pattern, "JOB", line_number)
             validate_application(application, application_pattern, "JOB", line_number)
             validate_nodeid(nodeid, nodeid_pattern, "JOB", line_number)
             validate_sub_application(smart_folder, job, line_number)
+
+            if dayscal:
+                validate_dayscal(dayscal, dayscal_pattern, "JOB", line_number)
 
             # iterate over all QUANTITATIVE elements within the JOB and check their NAME attributes
             for quantitative in job.findall('QUANTITATIVE'):
