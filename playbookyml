@@ -1,0 +1,30 @@
+- name: Installer et configurer nginx
+  gather_facts: false
+  hosts: nginxweb
+  vars:
+    formation_name: "Ansible Advanced"
+  tasks:
+    - name: Installer nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+
+    - name: Enable service nginx
+      ansible.builtin.service:
+        name: nginx 
+        enabled: yes
+        state: started
+    
+    # - name: Copier le fichier index sur le serveur
+    #   ansible.builtin.copy:
+    #     src: /home/kenneth/formation-ansible/files/index.html
+    #     dest: index.nginx-debian.html
+    #     owner: root
+    #     group: root
+
+    - name: Templater le fichier index sur le serveur
+      ansible.builtin.template:
+        src: /home/kenneth/formation-ansible/templates/index.html.j2
+        dest: /var/www/html/index.nginx-debian.html
+        owner: root
+        group: root
